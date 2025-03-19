@@ -1,17 +1,17 @@
 {
   "format": 1,
   "restore": {
-    "D:\\GitHub\\Back-End-Net\\MiProyectoBackend.csproj": {}
+    "D:\\GitHub\\Bible-API\\MiProyectoBackend.csproj": {}
   },
   "projects": {
-    "D:\\GitHub\\Back-End-Net\\MiProyectoBackend.csproj": {
+    "D:\\GitHub\\Bible-API\\MiProyectoBackend.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "D:\\GitHub\\Back-End-Net\\MiProyectoBackend.csproj",
+        "projectUniqueName": "D:\\GitHub\\Bible-API\\MiProyectoBackend.csproj",
         "projectName": "MiProyectoBackend",
-        "projectPath": "D:\\GitHub\\Back-End-Net\\MiProyectoBackend.csproj",
+        "projectPath": "D:\\GitHub\\Bible-API\\MiProyectoBackend.csproj",
         "packagesPath": "C:\\Users\\thiag\\.nuget\\packages\\",
-        "outputPath": "D:\\GitHub\\Back-End-Net\\obj\\",
+        "outputPath": "D:\\GitHub\\Bible-API\\obj\\",
         "projectStyle": "PackageReference",
         "configFilePaths": [
           "C:\\Users\\thiag\\AppData\\Roaming\\NuGet\\NuGet.Config"
