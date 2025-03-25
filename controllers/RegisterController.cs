@@ -55,4 +55,5 @@ public class RegisterController(AppDbContext context) : ControllerBase
 
         return Results.Ok(new { message = "¡Usuario eliminado exitosamente!" });
     }
+
 }
