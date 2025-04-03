@@ -29,10 +29,10 @@ namespace MiProyectoBackend.database
                 .HasKey(v => new { v.book_id, v.chapter, v.verse });
 
             modelBuilder.Entity<Collection>()
-                .HasKey(c => new { c.id });
+                .HasKey(c => new { c.name });
 
             modelBuilder.Entity<Verse_Collection>()
-                .HasKey(c => new { c.collection_id, c.book_id, c.chapter, c.verse });
+                .HasKey(c => new { c.collection_name, c.book_id, c.chapter, c.verse });
         }
     }
 }

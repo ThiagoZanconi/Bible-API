@@ -48,9 +48,16 @@ public class CollectionController(AppDbContext context) : ControllerBase
             return Results.NotFound(new { message = "Error 404: Coleccion no encontrada" });
         }
 
-        var verse_collections = await _context.verse_collection.Where(c => c.collection_id == collection.id).ToListAsync();
+        var verse_collections = await _context.verse_collection.Where(v => v.collection_name == collection.name).ToListAsync();
+        var verses = new List<Verse>();
+        foreach(var v in verse_collections){
+            Verse? verse = await _context.verses.FirstOrDefaultAsync(verse => verse.book_id == v.book_id && verse.chapter == v.chapter && verse.verse == v.verse );
+            if(verse!=null){
+                verses.Add(verse);
+            }
+        }
 
-        return Results.Ok(verse_collections);
+        return Results.Ok(verses);
     }
 
     [HttpPost("{name}")]
@@ -73,7 +80,7 @@ public class CollectionController(AppDbContext context) : ControllerBase
         _context.collections.Add(collection);
         await _context.SaveChangesAsync();
 
-        return Results.Created($"/collections/{collection.id}", collection);
+        return Results.Created($"/collections/{collection.name}", collection);
     }
 
     [HttpPost("{name}/{book_id}/{chapter}:{verse}")]
@@ -99,7 +106,7 @@ public class CollectionController(AppDbContext context) : ControllerBase
                 // Guardar en la base de datos
                 _context.collections.Add(collection);
             }
-            Verse_Collection verse_Collection = new Verse_Collection(collection.id, book_id, chapter, verse);
+            Verse_Collection verse_Collection = new Verse_Collection(name, book_id, chapter, verse);
             _context.verse_collection.Add(verse_Collection);
 
             await _context.SaveChangesAsync();
