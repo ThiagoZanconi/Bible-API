@@ -1,6 +1,7 @@
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
@@ -14,6 +15,20 @@ public class LoginController(IConfiguration config, AppDbContext context) : Cont
 
     private readonly IConfiguration _config = config;
     private readonly AppDbContext _context = context;
+
+
+    [HttpGet]
+    [Authorize(Roles = "User")]
+    public IResult ValidToken()
+    {
+        var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+        if (userIdClaim == null)
+        {
+            return Results.Unauthorized();
+        }
+        return Results.Ok("Token Valido");
+    }
 
     [HttpPost]
     public async Task<IActionResult> Login([FromBody] LoginCredentials userLogin)
@@ -63,7 +78,7 @@ public class LoginController(IConfiguration config, AppDbContext context) : Cont
             _config["Jwt:Issuer"],
             _config["Jwt:Audience"],
             claims,
-            expires: DateTime.Now.AddMinutes(60),
+            expires: DateTime.Now.AddDays(7),
             signingCredentials: credentials);
 
         return new JwtSecurityTokenHandler().WriteToken(token);
