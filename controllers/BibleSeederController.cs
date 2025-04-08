@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using MiProyectoBackend.database;
 using MiProyectoBackend.model;
 using System.Net.Http.Headers;
@@ -10,9 +11,9 @@ public class BibleSeederController(HttpClient httpClient, AppDbContext context) 
 {
     private readonly HttpClient _httpClient = httpClient;
     private readonly AppDbContext _context = context;
-    //private readonly DbInsert _dbInsert = new DbInsert(context);
+    private readonly DbInsert _dbInsert = new DbInsert(context);
     private string API_KEY = "b1a40be841de7af15b6b029fa873afe2";
-    private string API_LINK = "https://api.scripture.api.bible/v1/bibles/48acedcf8595c754-01/";
+    private string API_LINK = "https://api.scripture.api.bible/v1/bibles/b32b9d1b64b4ef29-01/";
 
     [HttpGet("books")]
     public async Task<List<BookSpanish>?> GetBooksAsync(){
@@ -33,40 +34,109 @@ public class BibleSeederController(HttpClient httpClient, AppDbContext context) 
                 Console.WriteLine("Error: "+e.Message);
             }
             return null;
-        }
+    }
 
-    private async Task PrintVersesAsync(string link){
-        await Task.Delay(2000);
-        HttpResponseMessage response = await _httpClient.GetAsync(link);
-        string responseBody = await response.Content.ReadAsStringAsync();
-
-        Console.WriteLine("Link: "+link);
-        Console.WriteLine("Response Body: "+responseBody);
-
-        while((""+responseBody).Equals("Retry Later")){
-            await Task.Delay(5000);
-            response = await _httpClient.GetAsync(link);
-            responseBody = await response.Content.ReadAsStringAsync();
-        }
-
-        using JsonDocument doc = JsonDocument.Parse(responseBody);
-        JsonElement root = doc.RootElement;
-        JsonElement verses = root.GetProperty("verses");
-        
-        foreach (JsonElement v in verses.EnumerateArray())
-        {
-            int chapter = v.GetProperty("chapter").GetInt32()!;
-            string book_id = v.GetProperty("book_id").GetString()!;
-            string book = v.GetProperty("book").GetString()!;
-            int verse = v.GetProperty("verse").GetInt32()!;
-            string text = v.GetProperty("text").GetString()!;
-
-            Chapter? chap = _context.chapters.FirstOrDefault(c => c.book_id == book_id && c.chapter == chapter);
-            if(chap==null){
-                //_dbInsert.InsertChapter(new Chapter(book_id,book,chapter));
+    [HttpGet("books/{book_id}/chapters")]
+    public async Task<List<ChapterSpanish>?> GetChaptersAsync(string book_id){
+            var request = new HttpRequestMessage(HttpMethod.Get, API_LINK+"books/"+book_id+"/chapters");
+            request.Headers.Add("api-key", API_KEY);
+            var response = await _httpClient.SendAsync(request);
+            try{
+                if (response.IsSuccessStatusCode)
+                {
+                    string json =  await response.Content.ReadAsStringAsync();
+                    ChaptersResponse? res = JsonSerializer.Deserialize<ChaptersResponse>(json);
+                    return res?.data ?? null;
+                }
             }
+            catch(Exception e){
+                Console.WriteLine("Error: "+e.Message);
+            }
+            return null;
+    }
 
-            //_dbInsert.InsertVerse(new Verse(book_id,book,chapter,verse,text,"kjv"));
+    [HttpGet("books/{book_id}/chapters/{chapterId}/verses")]
+    public async Task<List<VerseSpanish>?> GetVersesAsync(string book_id, string chapterId){
+            var request = new HttpRequestMessage(HttpMethod.Get, API_LINK+"books/"+book_id+"/chapters/"+chapterId+"/verses");
+            request.Headers.Add("api-key", API_KEY);
+            var response = await _httpClient.SendAsync(request);
+            try{
+                if (response.IsSuccessStatusCode)
+                {
+                    string json =  await response.Content.ReadAsStringAsync();
+                    VersesResponse? res = JsonSerializer.Deserialize<VersesResponse>(json);
+                    return res?.data ?? null;
+                }
+            }
+            catch(Exception e){
+                Console.WriteLine("Error: "+e.Message);
+            }
+            return null;
+    }
+
+    [HttpGet("verse/{verse_id}")]
+    public async Task<Data?> GetVerseAsync(string verse_id){
+        string content_type = "text";
+        string url = $"{API_LINK}verses/{verse_id}?content-type={content_type}&include-verse-numbers=false";
+        var request = new HttpRequestMessage(HttpMethod.Get, url);
+        request.Headers.Add("api-key", API_KEY);
+        var response = await _httpClient.SendAsync(request);
+        try{
+            if (response.IsSuccessStatusCode)
+            {
+                string json =  await response.Content.ReadAsStringAsync();
+                ApiResponse? apiResponse = JsonSerializer.Deserialize<ApiResponse>(json);
+                if(apiResponse!=null){
+                    apiResponse.data.content = apiResponse.data.content.TrimStart();
+                }
+                return apiResponse?.data;
+            }
         }
+        catch(Exception e){
+            Console.WriteLine("Error: "+e.Message);
+        }
+        return null;
+    }
+    /*
+    [HttpPost("translation")]
+    public async Task<IResult> PostTranslation(){
+        try{
+            Translation translation = new("BES","La Biblia en Español Sencillo","Español","esp","Creative Commons Reconocimiento");
+            _dbInsert.InsertTranslation(translation);
+            return Results.Ok("Traduccion agregada correctamente");
+        }
+        catch(Exception e){
+            Console.WriteLine("Error: "+e.Message);
+        }
+        return Results.InternalServerError("Traduccion no agregada correctamente");
+    }
+    */
+    [HttpPost("books{id}")]
+    public async Task<IResult> PostBook(string id){
+        try{
+
+            var chapters = await _context.chapters.Where(c => c.book_id == id).ToListAsync();
+            foreach(var chapter in chapters){
+                var verses = await _context.verses.Where(v => v.chapter == chapter.chapter && v.book_id==id).ToListAsync();
+                foreach(var verse in verses){
+                    Data? data = await GetVerseAsync(id+"."+verse.chapter+"."+verse.verse);
+                    
+                    if(data!=null){
+                        string text = data.content;
+                        Verse input = new(verse.book_id, verse.book, verse.chapter, verse.verse, text, "BES");
+                        _dbInsert.InsertVerse(input);
+                        Console.WriteLine(data.id);
+                        await Task.Delay(100);
+                    }
+                    
+                }
+                
+            }
+            return Results.Ok("Versos seedeados correctamente");
+        }catch(Exception e){
+            Console.WriteLine("Error: "+e.Message);
+        }
+        return Results.InternalServerError("Error: No se seedearon correctamente los versos");
+        
     }
 }
