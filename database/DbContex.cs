@@ -26,7 +26,7 @@ namespace MiProyectoBackend.database
                 .HasKey(b => new { b.id });
 
             modelBuilder.Entity<Verse>()
-                .HasKey(v => new { v.book_id, v.chapter, v.verse });
+                .HasKey(v => new { v.book_id, v.chapter, v.verse, v.translation_id });
 
             modelBuilder.Entity<Collection>()
                 .HasKey(c => new { c.name });
