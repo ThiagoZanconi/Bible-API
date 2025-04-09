@@ -111,7 +111,7 @@ public class BibleSeederController(HttpClient httpClient, AppDbContext context) 
         return Results.InternalServerError("Traduccion no agregada correctamente");
     }
     */
-    [HttpPost("books{id}")]
+    [HttpPost("books/{id}")]
     public async Task<IResult> PostBook(string id){
         try{
 
