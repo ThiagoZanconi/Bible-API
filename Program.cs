@@ -95,6 +95,9 @@ builder.Services.AddSwaggerGen(c =>
     });
 });
 
+var webPort = Environment.GetEnvironmentVariable("PORT") ?? "8080";
+builder.WebHost.UseUrls($"http://*:{webPort}");
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
@@ -104,7 +107,6 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
-app.UseHttpsRedirection();
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
