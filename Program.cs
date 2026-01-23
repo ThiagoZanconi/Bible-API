@@ -106,7 +106,7 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI();
 }
-
+app.MapGet("/", () => "Bible API is running 🚀");
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
