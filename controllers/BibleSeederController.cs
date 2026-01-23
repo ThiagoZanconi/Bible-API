@@ -2,7 +2,6 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using MiProyectoBackend.database;
 using MiProyectoBackend.model;
-using System.Net.Http.Headers;
 using System.Text.Json;
 
 [ApiController]
@@ -121,22 +120,22 @@ public class BibleSeederController(HttpClient httpClient, AppDbContext context) 
                 foreach(var verse in verses){
                     Data? data = await GetVerseAsync(id+"."+verse.chapter+"."+verse.verse);
                     
-                    if(data!=null){
-                        string text = data.content;
-                        Verse input = new(verse.book_id, verse.book, verse.chapter, verse.verse, text, "BES");
-                        _dbInsert.InsertVerse(input);
-                        Console.WriteLine(data.id);
-                        await Task.Delay(100);
+                    Verse? verseContained = _context.verses.Where(v => v.chapter == verse.chapter && v.book_id == id && v.translation_id== "BES" && v.verse == verse.verse).FirstOrDefault();
+                    if(verseContained == null){
+                        if(data!=null){
+                            string text = data.content;
+                            Verse input = new(verse.book_id, verse.book, verse.chapter, verse.verse, text, "BES");
+                            _dbInsert.InsertVerse(input);
+                            Console.WriteLine(data.id);
+                            await Task.Delay(100);
+                        }
                     }
-                    
                 }
-                
             }
             return Results.Ok("Versos seedeados correctamente");
         }catch(Exception e){
             Console.WriteLine("Error: "+e.Message);
         }
         return Results.InternalServerError("Error: No se seedearon correctamente los versos");
-        
     }
 }

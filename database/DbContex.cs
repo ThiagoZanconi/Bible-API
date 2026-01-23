@@ -12,7 +12,7 @@ namespace MiProyectoBackend.database
         public DbSet<Chapter> chapters { get; set; }
         public DbSet<Book> books { get; set; }
         public DbSet<Collection> collections {get; set;}
-        public DbSet<Verse_Collection> verse_collection {get; set;}
+        public DbSet<VerseCollection> verse_collection {get; set;}
         
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -29,10 +29,10 @@ namespace MiProyectoBackend.database
                 .HasKey(v => new { v.book_id, v.chapter, v.verse, v.translation_id });
 
             modelBuilder.Entity<Collection>()
-                .HasKey(c => new { c.name });
+                .HasKey(c => new { c.Name });
 
-            modelBuilder.Entity<Verse_Collection>()
-                .HasKey(c => new { c.collection_name, c.book_id, c.chapter, c.verse });
+            modelBuilder.Entity<VerseCollection>()
+                .HasKey(c => new { c.BookId, c.Chapter, c.Verse, c.CollectionId });
         }
     }
 }
