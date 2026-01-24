@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using MiProyectoBackend.database;
+using MiProyectoBackend.postgres_model;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -20,14 +21,19 @@ var user = Environment.GetEnvironmentVariable("MYSQLUSER");
 var password = Environment.GetEnvironmentVariable("MYSQLPASSWORD");
 var connectionString = $"Server={server};Port={port};Database=backendproject_schema;User={user};Password={password};";
 
-/*
-builder.Services.AddDbContext<AppDbContext>(options =>
-    options.UseMySql(builder.Configuration.GetConnectionString("DefaultConnection"), 
-                     new MySqlServerVersion(new Version(8, 0, 32))));
-
-*/
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseMySql(connectionString, new MySqlServerVersion(new Version(8, 0, 32))));
+
+var pgHost = Environment.GetEnvironmentVariable("PGHOST") ?? "localhost";
+var pgPort = Environment.GetEnvironmentVariable("PGPORT") ?? "5432";
+var pgUser = Environment.GetEnvironmentVariable("PGUSER") ?? "postgres";
+var pgPassword = Environment.GetEnvironmentVariable("PGPASSWORD") ?? "root";
+var pgDatabase = Environment.GetEnvironmentVariable("PGDATABASE") ?? "backendproject_schema";
+
+var pgConnectionString = $"Host={pgHost};Port={pgPort};Database={pgDatabase};Username={pgUser};Password={pgPassword};Pooling=true;SSL Mode=Disable;";
+var pgConnectionStringNube = $"Host={pgHost};Port={pgPort};Database={pgDatabase};Username={pgUser};Password={pgPassword};Pooling=true;SSL Mode=Require;Trust Server Certificate=true;";
+builder.Services.AddDbContext<PostgresContext>(options =>
+    options.UseNpgsql(pgConnectionString));
 
 builder.Services.AddControllers();
 builder.Services.AddHttpClient();
