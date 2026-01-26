@@ -1,11 +1,10 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using MiProyectoBackend.database;
-using MiProyectoBackend.model;
 using MiProyectoBackend.postgres_model;
 
-[ApiController]
-[Route("api/[controller]")]
+//[ApiController]
+//[Route("api/[controller]")]
 public class PostgresSeeder(AppDbContext context) : ControllerBase
 {
     private readonly AppDbContext _context = context;
