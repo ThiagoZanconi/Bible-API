@@ -1,13 +1,12 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using MiProyectoBackend.database;
-using MiProyectoBackend.model;
+using MiProyectoBackend.postgres_model;
 
 [ApiController]
 [Route("api/[controller]")]
-public class BibleController(AppDbContext context) : ControllerBase
+public class BibleController(PostgresContext context) : ControllerBase
 {
-    private readonly AppDbContext _context = context;
+    private readonly PostgresContext _context = context;
 
     public static readonly string[] OrderedBooks =
     {
@@ -33,7 +32,7 @@ public class BibleController(AppDbContext context) : ControllerBase
         List<Book> books = new List<Book>();
 
         foreach(var b in OrderedBooks){
-            var book = await _context.books.FirstOrDefaultAsync(bo => bo.id == b);
+            var book = await _context.Books.FirstOrDefaultAsync(bo => bo.Id == b);
             if(book!=null){
                 books.Add(book);
             }
@@ -51,8 +50,8 @@ public class BibleController(AppDbContext context) : ControllerBase
     [HttpGet("{book_id}")]
     public async Task<IResult> GetBook(string book_id)
     {
-        var chapters = await _context.chapters
-        .Where(c => c.book_id == book_id)
+        var chapters = await _context.Chapters
+        .Where(c => c.BookId == book_id)
         .ToListAsync();
 
         if (chapters.Count==0)
@@ -90,8 +89,8 @@ public class BibleController(AppDbContext context) : ControllerBase
     //[HttpGet("{book_id}/{chapter}")]
     private async Task<IResult> GetChapter(string translation_id, string book_id, int chapter)
     {
-        var verses = await _context.verses
-        .Where(v => v.translation_id == translation_id && v.book_id == book_id && v.chapter == chapter)
+        var verses = await _context.Verses
+        .Where(v => v.TranslationId == translation_id && v.BookId == book_id && v.Chapter == chapter)
         .ToListAsync();
 
         if (verses.Count==0)
@@ -104,7 +103,7 @@ public class BibleController(AppDbContext context) : ControllerBase
     //[HttpGet("{book_id}/{chapter}:{verse}")]
     private async Task<IResult> GetVerse( string translation_id, string book_id, int chapter, int verse)
     {
-        var v = await _context.verses.FirstOrDefaultAsync(v => v.translation_id == translation_id && v.book_id == book_id && v.chapter == chapter && v.verse == verse);
+        var v = await _context.Verses.FirstOrDefaultAsync(v => v.TranslationId == translation_id && v.BookId == book_id && v.Chapter == chapter && v.Vrs == verse);
 
         if (v == null)
         {
@@ -119,7 +118,7 @@ public class BibleController(AppDbContext context) : ControllerBase
         if(verse1>=verse2){
             return Results.InternalServerError("Error: Verse 1 should preceed verse 2");
         }
-        var v = await _context.verses.Where(v => v.translation_id == translation_id && v.book_id == book_id && v.chapter == chapter && v.verse >= verse1 && v.verse<=verse2).ToListAsync();
+        var v = await _context.Verses.Where(v => v.TranslationId == translation_id && v.BookId == book_id && v.Chapter == chapter && v.Vrs >= verse1 && v.Vrs<=verse2).ToListAsync();
 
         if (v == null)
         {
@@ -136,13 +135,13 @@ public class BibleController(AppDbContext context) : ControllerBase
         if(keywordList.Count == 0){
             return Results.InternalServerError("Error: Bad input of keywords");
         }
-        var verses = await _context.verses
-        .Where(v => v.text.Contains(keywordList[0]) && v.translation_id == translation_id)
+        var verses = await _context.Verses
+        .Where(v => v.Text.Contains(keywordList[0]) && v.TranslationId == translation_id)
         .ToListAsync();
 
         for (int i = 1; i < keywordList.Count; i++)
         {
-            verses = [.. verses.Where(v => v.text.IndexOf(keywordList[i], StringComparison.OrdinalIgnoreCase) >= 0)];
+            verses = [.. verses.Where(v => v.Text.IndexOf(keywordList[i], StringComparison.OrdinalIgnoreCase) >= 0)];
         }
 
         if (verses.Count == 0)
@@ -161,13 +160,13 @@ public class BibleController(AppDbContext context) : ControllerBase
         if(keywordList.Count == 0){
             return Results.InternalServerError("Error: Bad input of keywords");
         }
-        var verses = await _context.verses
-        .Where(v => v.book_id == book_id && v.translation_id == translation_id && v.text.Contains(keywordList[0]))
+        var verses = await _context.Verses
+        .Where(v => v.BookId == book_id && v.TranslationId == translation_id && v.Text.Contains(keywordList[0]))
         .ToListAsync();
 
         for (int i = 1; i < keywordList.Count; i++)
         {
-            verses = [.. verses.Where(v => v.text.IndexOf(keywordList[i], StringComparison.OrdinalIgnoreCase) >= 0)];
+            verses = [.. verses.Where(v => v.Text.IndexOf(keywordList[i], StringComparison.OrdinalIgnoreCase) >= 0)];
         }
 
         if (verses.Count==0)
@@ -180,7 +179,7 @@ public class BibleController(AppDbContext context) : ControllerBase
     [HttpGet("translations")]
     public async Task<IResult> GetTranslations()
     {
-        var translations = await _context.translations.ToListAsync();
+        var translations = await _context.Translations.ToListAsync();
 
         if (translations.Count==0)
         {
@@ -192,7 +191,7 @@ public class BibleController(AppDbContext context) : ControllerBase
     [HttpGet("translations/{id}")]
     public async Task<IResult> GetTranslationsById(string id)
     {
-        var translations = await _context.translations.Where(t => t.identifier == id).ToListAsync();
+        var translations = await _context.Translations.Where(t => t.Id == id).ToListAsync();
 
         if (translations.Count==0)
         {

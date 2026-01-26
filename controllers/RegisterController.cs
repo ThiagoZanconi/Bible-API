@@ -1,34 +1,40 @@
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using MiProyectoBackend.database;
-using MiProyectoBackend.model;
+using MiProyectoBackend.postgres_model;
 
 [ApiController]
 [Route("api/[controller]")]
-public class RegisterController(AppDbContext context) : ControllerBase
+public class RegisterController(PostgresContext context) : ControllerBase
 {
-    private readonly AppDbContext _context = context;
+    private readonly PostgresContext _context = context;
 
     [HttpPost]
-    public async Task<IResult> Register([FromBody] RegisterCredentials userRegister)
+    public async Task<IResult> Register(
+        [FromBody] RegisterCredentials userRegister,
+        [FromServices] IPasswordHasher<User> passwordHasher)
     {
-        User? user = await _context.users.FirstOrDefaultAsync(u => u.Email == userRegister.Email);
-        if(user!=null){
-            return Results.InternalServerError("Email already used - ");
-        }
+        var existingUser = await _context.Users
+            .FirstOrDefaultAsync(u => u.Email == userRegister.Email);
 
-        user = new User(userRegister.Name,userRegister.Email, userRegister.Password,"User");
-        
-        try{
-            _context.users.Add(user);
-            await _context.SaveChangesAsync();
-        }catch(Exception e){
-            return Results.InternalServerError("Error: Credenciales invalidas - "+e.Message);
-        }
-        
-        return Results.Created();
+        if (existingUser != null)
+            return Results.Conflict("Email already used");
+
+        var user = new User
+        {
+            Name = userRegister.Name,
+            Email = userRegister.Email,
+            Role = "User"
+        };
+
+        user.PasswordHash = passwordHasher.HashPassword(user, userRegister.Password);
+
+        _context.Users.Add(user);
+        await _context.SaveChangesAsync();
+
+        return Results.Created($"/users/{user.Id}", null);
     }
 
     [HttpDelete]
@@ -44,13 +50,13 @@ public class RegisterController(AppDbContext context) : ControllerBase
 
         int user_id = int.Parse(userIdClaim);
 
-        var user = await _context.users.FindAsync(user_id);
+        var user = await _context.Users.FindAsync(user_id);
 
         if (user == null){
             return Results.NotFound($"No se encontró el usuario con ID {user_id}.");
         }
 
-        _context.users.Remove(user);
+        _context.Users.Remove(user);
         await _context.SaveChangesAsync();
 
         return Results.Ok(new { message = "¡Usuario eliminado exitosamente!" });

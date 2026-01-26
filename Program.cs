@@ -1,9 +1,9 @@
 using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
-using MiProyectoBackend.database;
 using MiProyectoBackend.postgres_model;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -14,15 +14,6 @@ var cookiePolicyOptions = new CookiePolicyOptions
 };
 
 DotNetEnv.Env.Load();
-
-var server = Environment.GetEnvironmentVariable("MYSQLHOST");
-var port = Environment.GetEnvironmentVariable("MYSQLPORT");
-var user = Environment.GetEnvironmentVariable("MYSQLUSER");
-var password = Environment.GetEnvironmentVariable("MYSQLPASSWORD");
-var connectionString = $"Server={server};Port={port};Database=backendproject_schema;User={user};Password={password};";
-
-builder.Services.AddDbContext<AppDbContext>(options =>
-    options.UseMySql(connectionString, new MySqlServerVersion(new Version(8, 0, 32))));
 
 var pgHost = Environment.GetEnvironmentVariable("PGHOST") ?? "localhost";
 var pgPort = Environment.GetEnvironmentVariable("PGPORT") ?? "5432";
@@ -37,6 +28,7 @@ builder.Services.AddDbContext<PostgresContext>(options =>
 
 builder.Services.AddControllers();
 builder.Services.AddHttpClient();
+builder.Services.AddScoped<IPasswordHasher<User>, PasswordHasher<User>>();
 builder.Services.AddAuthentication(options =>
 {
     options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme; 

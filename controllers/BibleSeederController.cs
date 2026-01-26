@@ -4,8 +4,8 @@ using MiProyectoBackend.database;
 using MiProyectoBackend.model;
 using System.Text.Json;
 
-[ApiController]
-[Route("api/[controller]")]
+//[ApiController]
+//[Route("api/[controller]")]
 public class BibleSeederController(HttpClient httpClient, AppDbContext context) : ControllerBase
 {
     private readonly HttpClient _httpClient = httpClient;

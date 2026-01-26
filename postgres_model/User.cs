@@ -13,7 +13,7 @@ namespace MiProyectoBackend.postgres_model
         [Column("email")]
         public string Email { get; set; } = null!;
         [Column("password_hash")]
-        public string Password { get; set; } = null!;
+        public string PasswordHash { get; set; } = null!;
         [Column("role")]
         public string Role { get; set; } = null!;
     }

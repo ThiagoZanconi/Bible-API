@@ -2,19 +2,19 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
-using MiProyectoBackend.database;
-using MiProyectoBackend.model;
+using MiProyectoBackend.postgres_model;
 
 [ApiController]
 [Route("api/[controller]")]
-public class LoginController(IConfiguration config, AppDbContext context) : ControllerBase
+public class LoginController(IConfiguration config, PostgresContext context) : ControllerBase
 {
 
     private readonly IConfiguration _config = config;
-    private readonly AppDbContext _context = context;
+    private readonly PostgresContext _context = context;
 
 
     [HttpGet]
@@ -31,31 +31,35 @@ public class LoginController(IConfiguration config, AppDbContext context) : Cont
     }
 
     [HttpPost]
-    public async Task<IActionResult> Login([FromBody] LoginCredentials userLogin)
+    public async Task<IActionResult> Login(
+        [FromBody] LoginCredentials userLogin,
+        [FromServices] IPasswordHasher<User> passwordHasher)
     {
-        var user = await Auth(userLogin);
-        if (user != null)
-        {
-            var token = Generate(user); // Genera el JWT
+        var user = await _context.Users
+            .FirstOrDefaultAsync(u => u.Email == userLogin.Email);
 
-            // Devuelve el token JWT directamente en la respuesta
-            return Ok(new { token }); // Puedes devolverlo como un objeto JSON con la propiedad 'token'
-        }
+        if (user == null)
+            return Unauthorized("Credenciales incorrectas");
 
-        return NotFound("Credenciales incorrectas");
+        var result = passwordHasher.VerifyHashedPassword(
+            user,
+            user.PasswordHash,
+            userLogin.Password
+        );
+
+        if (result == PasswordVerificationResult.Failed)
+            return Unauthorized("Credenciales incorrectas");
+
+        var token = Generate(user);
+
+        return Ok(new { token });
     }
-
 
     [HttpPost("logout")]
     public IActionResult Logout()
     {
         Response.Cookies.Delete("jwt");
         return Ok("Sesión cerrada");
-    }
-
-    private async Task<User?> Auth(LoginCredentials userLogin)
-    {
-        return await _context.users.FirstOrDefaultAsync(u => u.Email == userLogin.Email && u.Password == userLogin.Password);
     }
 
     private string Generate(User user)
