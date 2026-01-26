@@ -82,7 +82,11 @@ public class BibleController(PostgresContext context) : ControllerBase
                 return await GetChapter(translation_id, book_id, chapter);
             }
         }catch(FormatException e){
-            return Results.InternalServerError(e.Message);
+            return Results.Problem(
+                title: "Internal Server Error",
+                detail: e.Message,
+                statusCode: 500
+            );
         }    
     }
 
@@ -116,7 +120,11 @@ public class BibleController(PostgresContext context) : ControllerBase
     private async Task<IResult> GetContinuationOfVerses(string translation_id, string book_id, int chapter, int verse1, int verse2)
     {
         if(verse1>=verse2){
-            return Results.InternalServerError("Error: Verse 1 should preceed verse 2");
+            return Results.Problem(
+                title: "Internal Server Error",
+                detail: "Error: Verse 1 should preceed verse 2",
+                statusCode: 500
+            );
         }
         var v = await _context.Verses.Where(v => v.TranslationId == translation_id && v.BookId == book_id && v.Chapter == chapter && v.Vrs >= verse1 && v.Vrs<=verse2).ToListAsync();
 
@@ -133,7 +141,11 @@ public class BibleController(PostgresContext context) : ControllerBase
         var parsedKeyword = keywords.Replace('_',' ');
         List<string> keywordList = parsedKeyword.Split(',').ToList();
         if(keywordList.Count == 0){
-            return Results.InternalServerError("Error: Bad input of keywords");
+            return Results.Problem(
+                title: "Internal Server Error",
+                detail: "Bad input of keywords",
+                statusCode: 500
+            );
         }
         var verses = await _context.Verses
         .Where(v => v.Text.Contains(keywordList[0]) && v.TranslationId == translation_id)
@@ -158,7 +170,11 @@ public class BibleController(PostgresContext context) : ControllerBase
         var parsedKeyword = keywords.Replace('_',' ');
         List<string> keywordList = parsedKeyword.Split(',').ToList();
         if(keywordList.Count == 0){
-            return Results.InternalServerError("Error: Bad input of keywords");
+                        return Results.Problem(
+                title: "Internal Server Error",
+                detail: "Bad input of keywords",
+                statusCode: 500
+            );
         }
         var verses = await _context.Verses
         .Where(v => v.BookId == book_id && v.TranslationId == translation_id && v.Text.Contains(keywordList[0]))

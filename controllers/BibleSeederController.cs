@@ -136,6 +136,10 @@ public class BibleSeederController(HttpClient httpClient, AppDbContext context) 
         }catch(Exception e){
             Console.WriteLine("Error: "+e.Message);
         }
-        return Results.InternalServerError("Error: No se seedearon correctamente los versos");
+        return Results.Problem(
+                title: "Internal Server Error",
+                detail: "Error: No se seedearon correctamente los versos",
+                statusCode: 500
+            );
     }
 }

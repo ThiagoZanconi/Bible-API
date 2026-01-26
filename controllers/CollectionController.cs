@@ -116,7 +116,11 @@ public class CollectionController(PostgresContext context) : ControllerBase
             return Results.Created();
 
         }catch(Exception e){
-            return Results.InternalServerError("Error: Parametros invalidos - "+e.Message);
+            return Results.Problem(
+                title: "Internal Server Error",
+                detail: "Error: Parametros invalidos - "+e.Message,
+                statusCode: 500
+            );
         }
         
     }
