@@ -20,11 +20,12 @@ var pgPort = Environment.GetEnvironmentVariable("PGPORT") ?? "5432";
 var pgUser = Environment.GetEnvironmentVariable("PGUSER") ?? "postgres";
 var pgPassword = Environment.GetEnvironmentVariable("PGPASSWORD") ?? "root";
 var pgDatabase = Environment.GetEnvironmentVariable("PGDATABASE") ?? "backendproject_schema";
+//var pgConnectionStringNube = $"Host={pgHost};Port={pgPort};Database={pgDatabase};Username={pgUser};Password={pgPassword};Pooling=true;SSL Mode=Require;Trust Server Certificate=true;";
+
 
 var pgConnectionString = $"Host={pgHost};Port={pgPort};Database={pgDatabase};Username={pgUser};Password={pgPassword};Pooling=true;SSL Mode=Disable;";
-var pgConnectionStringNube = $"Host={pgHost};Port={pgPort};Database={pgDatabase};Username={pgUser};Password={pgPassword};Pooling=true;SSL Mode=Require;Trust Server Certificate=true;";
 builder.Services.AddDbContext<PostgresContext>(options =>
-    options.UseNpgsql(pgConnectionString));
+    options.UseNpgsql(builder.Configuration.GetConnectionString("Postgres")));
 
 builder.Services.AddControllers();
 builder.Services.AddHttpClient();
@@ -94,7 +95,7 @@ builder.Services.AddSwaggerGen(c =>
 });
 
 var webPort = Environment.GetEnvironmentVariable("PORT") ?? "8080";
-builder.WebHost.UseUrls($"http://*:{webPort}");
+builder.WebHost.UseUrls($"http://localhost:{webPort}");
 
 var app = builder.Build();
 

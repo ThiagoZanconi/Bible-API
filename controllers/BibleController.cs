@@ -26,13 +26,13 @@ public class BibleController(PostgresContext context) : ControllerBase
         "3JN", "JUD", "REV"
     };
 
-    [HttpGet]
-    public async Task<IResult> GetBible()
+    [HttpGet("{translation_id}")]
+    public async Task<IResult> GetBible(string translation_id)
     {
         List<Book> books = new List<Book>();
 
         foreach(var b in OrderedBooks){
-            var book = await _context.Books.FirstOrDefaultAsync(bo => bo.Id == b);
+            var book = await _context.Books.FirstOrDefaultAsync(bo => bo.Id == b && bo.TranslationId == translation_id);
             if(book!=null){
                 books.Add(book);
             }
@@ -47,11 +47,11 @@ public class BibleController(PostgresContext context) : ControllerBase
         return Results.Ok(books);
     }
 
-    [HttpGet("{book_id}")]
-    public async Task<IResult> GetBook(string book_id)
+    [HttpGet("{translation_id}/{book_id}")]
+    public async Task<IResult> GetBook(string translation_id, string book_id)
     {
         var chapters = await _context.Chapters
-        .Where(c => c.BookId == book_id)
+        .Where(c => c.BookId == book_id && c.TranslationId == translation_id)
         .ToListAsync();
 
         if (chapters.Count==0)
