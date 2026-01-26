@@ -23,9 +23,16 @@ var pgDatabase = Environment.GetEnvironmentVariable("PGDATABASE") ?? "backendpro
 //var pgConnectionStringNube = $"Host={pgHost};Port={pgPort};Database={pgDatabase};Username={pgUser};Password={pgPassword};Pooling=true;SSL Mode=Require;Trust Server Certificate=true;";
 
 
-var pgConnectionString = $"Host={pgHost};Port={pgPort};Database={pgDatabase};Username={pgUser};Password={pgPassword};Pooling=true;SSL Mode=Disable;";
+var pgConnectionString = builder.Configuration.GetConnectionString("Postgres");
+
+if (string.IsNullOrEmpty(pgConnectionString))
+{
+    throw new Exception("Postgres connection string not found");
+}
+
+Console.WriteLine(pgConnectionString);
 builder.Services.AddDbContext<PostgresContext>(options =>
-    options.UseNpgsql(builder.Configuration.GetConnectionString("Postgres")));
+    options.UseNpgsql(pgConnectionString));
 
 builder.Services.AddControllers();
 builder.Services.AddHttpClient();
