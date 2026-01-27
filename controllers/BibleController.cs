@@ -138,52 +138,61 @@ public class BibleController(PostgresContext context) : ControllerBase
     [HttpGet("{translation_id}/keywords/{keywords}")]
     public async Task<IResult> GetVersesFilteredByKeywords(string translation_id, string keywords)
     {
-        var parsedKeyword = keywords.Replace('_',' ');
-        List<string> keywordList = parsedKeyword.Split(',').ToList();
-        if(keywordList.Count == 0){
-            return Results.Problem(
-                title: "Internal Server Error",
-                detail: "Bad input of keywords",
-                statusCode: 500
-            );
-        }
-        var verses = await _context.Verses
-        .Where(v => v.Text.Contains(keywordList[0]) && v.TranslationId == translation_id)
-        .ToListAsync();
+        var parsedKeyword = keywords.Replace('_', ' ');
+        var keywordList = parsedKeyword
+            .Split(',', StringSplitOptions.RemoveEmptyEntries)
+            .Select(k => k.Trim())
+            .ToList();
 
-        for (int i = 1; i < keywordList.Count; i++)
+        if (!keywordList.Any())
         {
-            verses = [.. verses.Where(v => v.Text.IndexOf(keywordList[i], StringComparison.OrdinalIgnoreCase) >= 0)];
+            return Results.BadRequest("Bad input of keywords");
         }
 
-        if (verses.Count == 0)
+        var query = _context.Verses
+        .Where(v => v.TranslationId == translation_id);
+
+        foreach (var k in keywordList)
         {
-            return Results.NotFound("Error: Verses not found with that keyword");
+            var keyword = k; // evitar closure issues
+            query = query.Where(v => EF.Functions.ILike(v.Text, $"%{keyword}%"));
         }
-        
+
+        var verses = await query.ToListAsync();
+
+        if (!verses.Any())
+        {
+            return Results.NotFound("Verses not found with those keywords");
+        }
+
         return Results.Ok(verses);
     }
+
 
     [HttpGet("{translation_id}/{book_id}/keywords/{keywords}")]
     public async Task<IResult> GetVersesInBookFilteredByKeywords(string translation_id, string book_id, string keywords)
     {
         var parsedKeyword = keywords.Replace('_',' ');
-        List<string> keywordList = parsedKeyword.Split(',').ToList();
-        if(keywordList.Count == 0){
-                        return Results.Problem(
-                title: "Internal Server Error",
-                detail: "Bad input of keywords",
-                statusCode: 500
-            );
-        }
-        var verses = await _context.Verses
-        .Where(v => v.BookId == book_id && v.TranslationId == translation_id && v.Text.Contains(keywordList[0]))
-        .ToListAsync();
+        var keywordList = parsedKeyword
+            .Split(',', StringSplitOptions.RemoveEmptyEntries)
+            .Select(k => k.Trim())
+            .ToList();
 
-        for (int i = 1; i < keywordList.Count; i++)
+        if (!keywordList.Any())
         {
-            verses = [.. verses.Where(v => v.Text.IndexOf(keywordList[i], StringComparison.OrdinalIgnoreCase) >= 0)];
+            return Results.BadRequest("Bad input of keywords");
         }
+        
+        var query = _context.Verses
+        .Where(v => v.TranslationId == translation_id && v.BookId == book_id);
+
+        foreach (var k in keywordList)
+        {
+            var keyword = k; // evitar closure issues
+            query = query.Where(v => EF.Functions.ILike(v.Text, $"%{keyword}%"));
+        }
+
+        var verses = await query.ToListAsync();
 
         if (verses.Count==0)
         {
