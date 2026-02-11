@@ -158,7 +158,7 @@ public class CollectionController(PostgresContext context) : ControllerBase
         var collection = await _context.Collections.FirstOrDefaultAsync(c => c.Name == name);
 
         if(collection!=null){
-            var verseCollection = await _context.VerseCollection.FirstOrDefaultAsync(v => v.CollectionId == collection.Id);
+            var verseCollection = await _context.VerseCollection.FirstOrDefaultAsync(v => v.CollectionId == collection.Id && v.BookId == book_id && v.Chapter == chapter && v.Verse == verse);
             if (verseCollection != null)
             {
                 _context.VerseCollection.Remove(verseCollection);
