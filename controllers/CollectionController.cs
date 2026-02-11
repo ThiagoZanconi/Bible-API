@@ -65,7 +65,6 @@ public class CollectionController(PostgresContext context) : ControllerBase
     [HttpPost("{name}")]
     [Authorize(Roles = "User")]
     public async Task<IResult> CreateCollection(string name){
-        // Obtener el ID del usuario autenticado
         var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
 
         if (userIdClaim == null)
@@ -75,10 +74,8 @@ public class CollectionController(PostgresContext context) : ControllerBase
 
         int user_id = int.Parse(userIdClaim);
 
-        // Crear la nueva colección
         var collection = new Collection{UserId = user_id, Name = name};
 
-        // Guardar en la base de datos
         _context.Collections.Add(collection);
         await _context.SaveChangesAsync();
 
@@ -88,7 +85,7 @@ public class CollectionController(PostgresContext context) : ControllerBase
     [HttpPost("{name}/{book_id}/{chapter}:{verse}")]
     [Authorize(Roles = "User")]
     public async Task<IResult> AddVerseToCollection(string name, string book_id, int chapter, int verse){
-        // Obtener el ID del usuario autenticado
+
         var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
 
         if (userIdClaim == null)
@@ -98,14 +95,12 @@ public class CollectionController(PostgresContext context) : ControllerBase
 
         int user_id = int.Parse(userIdClaim);
 
-        // Crear la nueva colección
         var collection = await _context.Collections.FirstOrDefaultAsync(c => c.Name == name);
 
         try{
             if(collection==null){
                 collection = new Collection{UserId = user_id, Name = name};
 
-                // Guardar en la base de datos
                 _context.Collections.Add(collection);
             }
             var verse_Collection = new VerseCollection{BookId = book_id, Chapter = chapter, Verse = verse, CollectionId = collection.Id};
@@ -127,7 +122,7 @@ public class CollectionController(PostgresContext context) : ControllerBase
     [HttpDelete("{name}")]
     [Authorize(Roles = "User")]
     public async Task<IResult> DeleteCollection(string name){
-        // Obtener el ID del usuario autenticado
+
         var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
 
         if (userIdClaim == null)
@@ -137,13 +132,38 @@ public class CollectionController(PostgresContext context) : ControllerBase
 
         int user_id = int.Parse(userIdClaim);
 
-        // Crear la nueva colección
         var collection =await _context.Collections.FirstOrDefaultAsync(c => c.Name == name);
 
-        // Guardar en la base de datos
         if(collection!=null){
             _context.Collections.Remove(collection);
             await _context.SaveChangesAsync();
+        }
+
+        return Results.NoContent();
+    }
+
+    [HttpDelete("{name}/{book_id}/{chapter}/{verse}")]
+    [Authorize(Roles = "User")]
+    public async Task<IResult> DeleteVerse(string name, string book_id, int chapter, int verse){
+
+        var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+        if (userIdClaim == null)
+        {
+            return Results.Unauthorized();
+        }
+
+        int user_id = int.Parse(userIdClaim);
+
+        var collection = await _context.Collections.FirstOrDefaultAsync(c => c.Name == name);
+
+        if(collection!=null){
+            var verseCollection = await _context.VerseCollection.FirstOrDefaultAsync(v => v.CollectionId == collection.Id);
+            if (verseCollection != null)
+            {
+                _context.VerseCollection.Remove(verseCollection);
+                await _context.SaveChangesAsync();
+            }   
         }
 
         return Results.NoContent();

@@ -154,7 +154,7 @@ public class BibleController(PostgresContext context) : ControllerBase
 
         foreach (var k in keywordList)
         {
-            var keyword = k; // evitar closure issues
+            var keyword = k;
             query = query.Where(v => EF.Functions.ILike(v.Text, $"%{keyword}%"));
         }
 
@@ -188,7 +188,7 @@ public class BibleController(PostgresContext context) : ControllerBase
 
         foreach (var k in keywordList)
         {
-            var keyword = k; // evitar closure issues
+            var keyword = k;
             query = query.Where(v => EF.Functions.ILike(v.Text, $"%{keyword}%"));
         }
 
