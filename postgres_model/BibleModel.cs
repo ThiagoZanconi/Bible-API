@@ -54,4 +54,11 @@ namespace MiProyectoBackend.postgres_model{
         public string TranslationId { get; set; } = null!;
     }
 
+    public class KeywordSearch
+    {
+        public int Index { get; set; } = 0;
+        public int MaxIndex { get; set; } = 0;
+        public List<Verse> Verses { get; set; } = new List<Verse>();
+    }
+
 }

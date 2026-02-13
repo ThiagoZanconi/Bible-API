@@ -7,6 +7,7 @@ using MiProyectoBackend.postgres_model;
 public class BibleController(PostgresContext context) : ControllerBase
 {
     private readonly PostgresContext _context = context;
+    private static int queryFactor = 30;
 
     public static readonly string[] OrderedBooks =
     {
@@ -135,8 +136,8 @@ public class BibleController(PostgresContext context) : ControllerBase
         return Results.Ok(v);
     }
 
-    [HttpGet("{translation_id}/keywords/{keywords}")]
-    public async Task<IResult> GetVersesFilteredByKeywords(string translation_id, string keywords)
+    [HttpGet("{translation_id}/keywords/{keywords}/{index?}")]
+    public async Task<IResult> GetVersesFilteredByKeywords(string translation_id, string keywords, int index = 0)
     {
         var parsedKeyword = keywords.Replace('_', ' ');
         var keywordList = parsedKeyword
@@ -165,12 +166,30 @@ public class BibleController(PostgresContext context) : ControllerBase
             return Results.NotFound("Verses not found with those keywords");
         }
 
-        return Results.Ok(verses);
+
+        int total = verses.Count;
+
+        int maxIndex = (int)Math.Ceiling((double)total / queryFactor) - 1;
+
+        if (index < 0) index = 0;
+        if (index > maxIndex) index = maxIndex;
+
+        int start = index * queryFactor;
+        int count = Math.Min(queryFactor, total - start);
+
+        KeywordSearch keywordSearch = new KeywordSearch
+        {
+            MaxIndex = maxIndex,
+            Index = index,
+            Verses = verses.GetRange(start, count)
+        };
+
+        return Results.Ok(keywordSearch);
     }
 
 
-    [HttpGet("{translation_id}/{book_id}/keywords/{keywords}")]
-    public async Task<IResult> GetVersesInBookFilteredByKeywords(string translation_id, string book_id, string keywords)
+    [HttpGet("{translation_id}/{book_id}/keywords/{keywords}/{index?}")]
+    public async Task<IResult> GetVersesInBookFilteredByKeywords(string translation_id, string book_id, string keywords, int index = 0)
     {
         var parsedKeyword = keywords.Replace('_',' ');
         var keywordList = parsedKeyword
@@ -198,7 +217,26 @@ public class BibleController(PostgresContext context) : ControllerBase
         {
             return Results.NotFound("Error: Verses not found with that keyword");
         }
-        return Results.Ok(verses);
+
+
+        int total = verses.Count;
+
+        int maxIndex = (int)Math.Ceiling((double)total / queryFactor) - 1;
+
+        if (index < 0) index = 0;
+        if (index > maxIndex) index = maxIndex;
+
+        int start = index * queryFactor;
+        int count = Math.Min(queryFactor, total - start);
+
+        KeywordSearch keywordSearch = new KeywordSearch
+        {
+            MaxIndex = maxIndex,
+            Index = index,
+            Verses = verses.GetRange(start, count)
+        };
+
+        return Results.Ok(keywordSearch);
     }
 
     [HttpGet("translations")]
