@@ -188,7 +188,7 @@ public class BibleController(PostgresContext context) : ControllerBase
     }
 
 
-    [HttpGet("{translation_id}/{book_id}/keywords/{keywords}/{index?}")]
+    [HttpGet("{translation_id}/keywords/{book_id}/{keywords}/{index?}")]
     public async Task<IResult> GetVersesInBookFilteredByKeywords(string translation_id, string book_id, string keywords, int index = 0)
     {
         var parsedKeyword = keywords.Replace('_',' ');
